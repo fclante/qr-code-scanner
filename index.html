@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Code Scanner with Local Storage</title>
+</head>
+<body>
+  <h1>QR Code Scanner</h1>
+  <video id="camera" autoplay></video>
+  <canvas id="canvas" hidden></canvas>
+  <p id="result">Result: <span id="qr-result"></span></p>
+  <button onclick="addToDatabase()">Add to Database</button>
+  <button onclick="checkDatabase()">Check Database</button>
+  <button onclick="viewDatabase()">View All Stored Codes</button>
+
+  <script>
+    const video = document.getElementById('camera');
+    const canvas = document.getElementById('canvas');
+    const result = document.getElementById('qr-result');
+    const ctx = canvas.getContext('2d');
+
+    let qrCodeData = '';
+
+    // Access camera
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: 'environment' } })
+      .then((stream) => {
+        video.srcObject = stream;
+        video.setAttribute('playsinline', true); // Required for iOS
+        video.play();
+        scanQRCode();
+      });
+
+    function scanQRCode() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      // Use jsQR library for QR code scanning
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'dontInvert',
+      });
+
+      if (code) {
+        qrCodeData = code.data;
+        result.textContent = qrCodeData;
+      } else {
+        requestAnimationFrame(scanQRCode); // Keep scanning
+      }
+    }
+
+    // Utility to load and save data in localStorage
+    function loadDatabase() {
+      return JSON.parse(localStorage.getItem('qrDatabase')) || [];
+    }
+
+    function saveDatabase(data) {
+      localStorage.setItem('qrDatabase', JSON.stringify(data));
+    }
+
+    // Add scanned QR code to localStorage
+    function addToDatabase() {
+      if (!qrCodeData) {
+        alert('QR code is empty.');
+        return;
+      }
+
+      const database = loadDatabase();
+
+      if (!database.includes(qrCodeData)) {
+        database.push(qrCodeData);
+        saveDatabase(database);
+        alert('QR code added successfully!');
+      } else {
+        alert('QR code already exists in the database.');
+      }
+    }
+
+    // Check if the scanned QR code exists in localStorage
+    function checkDatabase() {
+      if (!qrCodeData) {
+        alert('QR code is empty.');
+        return;
+      }
+
+      const database = loadDatabase();
+
+      if (database.includes(qrCodeData)) {
+        alert('QR code found in the database!');
+      } else {
+        alert('QR code not found.');
+      }
+    }
+
+    // View all stored QR codes
+    function viewDatabase() {
+      const database = loadDatabase();
+      if (database.length > 0) {
+        alert('Stored QR Codes:\n' + database.join('\n'));
+      } else {
+        alert('No QR codes found in the database.');
+      }
+    }
+  </script>
+
+  <!-- Include jsQR library -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.min.js"></script>
+</body>
+</html>
