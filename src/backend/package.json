@@ -1,0 +1,19 @@
+{
+  "name": "node-postgres-crud-api",
+  "version": "1.0.0",
+  "description": "A Node.js API for performing CRUD operations on a PostgreSQL database.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  },
+  "author": "",
+  "license": "ISC"
+}
