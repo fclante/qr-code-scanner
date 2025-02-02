@@ -1,0 +1,47 @@
+<div class="error-container">
+    <h1>Error</h1>
+    <div class="error-message">
+        <p><%= message %></p>
+        <% if (error && error.stack) { %>
+            <pre class="error-stack"><%= error.stack %></pre>
+        <% } %>
+    </div>
+    <a href="/medarbejder/scan" class="back-button">Back to Scanner</a>
+</div>
+
+<style>
+.error-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ffcdd2;
+    border-radius: 8px;
+    background-color: #ffebee;
+}
+
+.error-message {
+    margin: 20px 0;
+    color: #c62828;
+}
+
+.error-stack {
+    background: #fff;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+
+.back-button {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #2196F3;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-top: 20px;
+}
+
+.back-button:hover {
+    background-color: #1976D2;
+}
+</style> 

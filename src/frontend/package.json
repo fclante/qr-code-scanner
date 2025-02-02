@@ -5,6 +5,8 @@
     "ejs": "^3.1.10",
     "exceljs": "^4.4.0",
     "express": "^4.21.2",
+    "express-ejs-layouts": "^2.5.1",
+    "html5-qrcode": "^2.3.8",
     "qrcode": "^1.5.4",
     "sqlite3": "^5.1.7"
   }

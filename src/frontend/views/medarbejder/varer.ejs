@@ -1,10 +1,10 @@
-<%- include('../layouts/layout',{ title: 'Medarbejder Varer', body: `
 <h1>Medarbejder - Varer</h1>
 <p>Content for Varer</p>
 <table border="1">
   <thead>
     <tr>
       <th>ID</th>
+      <th>Name</th>
       <th>Price</th>
       <th>Date Added</th>
       <th>Expiration Date</th>
@@ -17,7 +17,8 @@
     <% data.forEach((row) => { %>
       <tr>
         <td><%= row.id %></td>
-        <td>$<%= row.price.toFixed(2) %></td>
+        <td><%= row.name %></td>
+        <td>$<%= Number(row.price).toFixed(2) %></td>
         <td><%= row.date_added %></td>
         <td><%= row.expiration_date %></td>
         <td><%= row.quantity %></td>
@@ -25,10 +26,16 @@
         <td>
           <a href="/generate/<%= row.id %>">Print QR</a>
         </td>
+        <td>
+          <a href="/delete/<%= row.id %>">Delete</a>
+        </td>
+        <td>
+          <a href="/create">Create</a>
+        </td>
+        <td>
+          <a href="/update/<%= row.id %>">Update</a>
+        </td>
       </tr>
     <% }); %>
   </tbody>
 </table>
-
-` }) %>
-

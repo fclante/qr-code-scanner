@@ -15,6 +15,26 @@ class ApiFacade {
     }
   }
 
+  async getById(endpoint, id) {
+    try {
+      const response = await this.client.get(`${endpoint}`, { params: { id: id } });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching item:', error);
+      throw error;
+    }
+  }
+
+  async getByName(endpoint, name) {
+    try {
+      const response = await this.client.get(`${endpoint}`, { params: { name: name } });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching item:', error);
+      throw error;
+    }
+  }
+
   async post(endpoint, data) {
     try {
       const response = await this.client.post(endpoint, data);

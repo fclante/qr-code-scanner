@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS supermarket_data (
-  id INTEGER PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
   price REAL NOT NULL,
   date_added TEXT NOT NULL,
   expiration_date TEXT NOT NULL,

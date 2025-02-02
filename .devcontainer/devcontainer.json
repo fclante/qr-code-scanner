@@ -34,12 +34,7 @@
 		}
 	},
 	"containerEnv": {
-		"NODE_ENV": "development",
-		"DB_HOST": "${localEnv:OTG_DB_HOST}",
-		"DB_USER": "${localEnv:OTG_DB_USER}",
-		"DB_PASSWORD": "${localEnv:OTG_DB_PASSWORD}",
-		"DB_NAME": "${localEnv:OTG_DB_NAME}",
-		"DB_PORT": "${localEnv:OTG_DB_PORT}"
+		"NODE_ENV": "development"		
 	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
