@@ -27,12 +27,43 @@
         defaultExpDate = oneWeekFromNow.toISOString().split('T')[0];
       }
     %>
-    <input type="date" name="expiration_date" value="<%= defaultExpDate %>" required>
+    <input type="date" name="expiration_date" value="<%= item ? item.expiration_date : defaultExpDate %>" required>
   </div>
   
   <div>
     <label for="quantity">Quantity:</label>
     <input type="number" name="quantity" value="<%= item ? item.quantity : 20 %>" required>
+  </div>
+  
+  <div>
+    <label for="category_id">Category:</label>
+    <select name="category_id" required>
+      <% categories.forEach(category => { %>
+        <option value="<%= category.id %>" <%= item && item.category_id === category.id ? 'selected' : '' %>>
+          <%= category.name %>
+        </option>
+      <% }); %>
+    </select>
+  </div>
+
+  <div>
+    <label for="ean_gsone_country_code">EAN GS1 Country Code:</label>
+    <input type="text" name="ean_gsone_country_code" value="<%= item ? item.ean_gsone_country_code : '570-579' %>" required>
+  </div>
+
+  <div>
+    <label for="ean_manufacturer_code">EAN Manufacturer Code:</label>
+    <input type="number" name="ean_manufacturer_code" value="<%= item ? item.ean_manufacturer_code : '' %>" required>
+  </div>
+
+  <div>
+    <label for="ean_product_code">EAN Product Code:</label>
+    <input type="number" name="ean_product_code" value="<%= item ? item.ean_product_code : '' %>" required>
+  </div>
+
+  <div>
+    <label for="ean_check_digit">EAN Check Digit:</label>
+    <input type="number" name="ean_check_digit" value="<%= item ? item.ean_check_digit : '' %>" required>
   </div>
   
   <div>
@@ -57,7 +88,12 @@ document.getElementById('itemForm').addEventListener('submit', async (e) => {
     date_added: formData.get('date_added'),
     expiration_date: formData.get('expiration_date'),
     quantity: parseInt(formData.get('quantity')),
-    in_stock: formData.get('in_stock') === 'true'
+    in_stock: formData.get('in_stock') === 'true',
+    category_id: parseInt(formData.get('category_id')),
+    ean_gsone_country_code: formData.get('ean_gsone_country_code'),
+    ean_manufacturer_code: formData.get('ean_manufacturer_code'),
+    ean_product_code: formData.get('ean_product_code'),
+    ean_check_digit: formData.get('ean_check_digit')
   };
   
   console.log('Sending data:', data);

@@ -10,6 +10,11 @@
       <th>Expiration Date</th>
       <th>Quantity</th>
       <th>In Stock</th>
+      <th>Category</th>
+      <th>EAN GS1 Country Code</th>
+      <th>EAN Manufacturer</th>
+      <th>EAN Product</th>
+      <th>EAN Check</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -18,21 +23,20 @@
       <tr>
         <td><%= row.id %></td>
         <td><%= row.name %></td>
-        <td>$<%= Number(row.price).toFixed(2) %></td>
+        <td><%= Number(row.price).toFixed(2) %> DKK</td>
         <td><%= row.date_added %></td>
         <td><%= row.expiration_date %></td>
         <td><%= row.quantity %></td>
         <td><%= row.in_stock ? 'Yes' : 'No' %></td>
+        <td><%= row.category_name %></td>
+        <td><%= row.ean_gsone_country_code %></td>
+        <td><%= row.ean_manufacturer_code %></td>
+        <td><%= row.ean_product_code %></td>
+        <td><%= row.ean_check_digit %></td>
         <td>
           <a href="/generate/<%= row.id %>">Print QR</a>
-        </td>
-        <td>
           <a href="/delete/<%= row.id %>">Delete</a>
-        </td>
-        <td>
           <a href="/create">Create</a>
-        </td>
-        <td>
           <a href="/update/<%= row.id %>">Update</a>
         </td>
       </tr>

@@ -37,6 +37,10 @@
         <input type="hidden" name="quantity" value="<%= existingItem.quantity + scannedItem.quantity %>">
         <input type="hidden" name="date_added" value="<%= existingItem.date_added %>">
         <input type="hidden" name="in_stock" value="true">
+        <input type="hidden" name="ean_gsOne_country_code" value="<%= scannedItem.ean_gsOne_country_code %>">
+        <input type="hidden" name="ean_manufacturer_code" value="<%= scannedItem.ean_manufacturer_code %>">
+        <input type="hidden" name="ean_product_code" value="<%= scannedItem.ean_product_code %>">
+        <input type="hidden" name="ean_check_digit" value="<%= scannedItem.ean_check_digit %>">
         
         <div class="merge-preview">
           <p><strong>After Merging:</strong></p>
@@ -58,6 +62,10 @@
         <input type="hidden" name="expiration_date" value="<%= scannedItem.expiration_date %>">
         <input type="hidden" name="date_added" value="<%= new Date().toISOString().split('T')[0] %>">
         <input type="hidden" name="in_stock" value="true">
+        <input type="hidden" name="ean_gsOne_country_code" value="<%= scannedItem.ean_gsOne_country_code %>">
+        <input type="hidden" name="ean_manufacturer_code" value="<%= scannedItem.ean_manufacturer_code %>">
+        <input type="hidden" name="ean_product_code" value="<%= scannedItem.ean_product_code %>">
+        <input type="hidden" name="ean_check_digit" value="<%= scannedItem.ean_check_digit %>">
         
         <button type="submit" class="insert-button">
           Insert Into Database

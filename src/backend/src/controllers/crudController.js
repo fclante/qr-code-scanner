@@ -6,9 +6,25 @@ class CRUDController {
     this.pool = new Pool(dbConfig);
   }
 
+  async getCategories(req, res) {
+    try {
+      const result = await this.pool.query('SELECT * FROM food_categories');
+      res.json(result.rows);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      res.status(500).send('Error fetching categories');
+    }
+  }
+
   async getItems(req, res) {
     try {
-      const result = await this.pool.query('SELECT * FROM supermarket_data');
+      const result = await this.pool.query(`
+        SELECT 
+          s.*,
+          f.name as category_name
+        FROM supermarket_data s
+        LEFT JOIN food_categories f ON s.category_id = f.id
+      `);
       res.json(result.rows);
     } catch (error) {
       console.error('Error fetching items:', error);
@@ -61,11 +77,19 @@ class CRUDController {
   }
 
   async createItem(req, res) {
-    const { name, price, date_added, expiration_date, quantity, in_stock } = req.body;
+    const { 
+      name, price, date_added, expiration_date, quantity, in_stock,
+      category_id, ean_gsone_country_code, ean_manufacturer_code, 
+      ean_product_code, ean_check_digit 
+    } = req.body;
     try {
       const result = await this.pool.query(
-        'INSERT INTO supermarket_data (name, price, date_added, expiration_date, quantity, in_stock) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [name, price, date_added, expiration_date, quantity, in_stock]
+        `INSERT INTO supermarket_data (
+          name, price, date_added, expiration_date, quantity, in_stock,
+          category_id, ean_gsone_country_code, ean_manufacturer_code, ean_product_code, ean_check_digit
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+        [name, price, date_added, expiration_date, quantity, in_stock,
+         category_id, ean_gsone_country_code, ean_manufacturer_code, ean_product_code, ean_check_digit]
       );
       res.json(result.rows[0]);
     } catch (error) {
@@ -76,12 +100,22 @@ class CRUDController {
 
   async updateItem(req, res) {
     const { id } = req.params;
-    const { name, price, date_added, expiration_date, quantity, in_stock } = req.body;
-    console.log(name, price, date_added, expiration_date, quantity, in_stock);
+    const { 
+      name, price, date_added, expiration_date, quantity, in_stock,
+      category_id, ean_gsone_country_code, ean_manufacturer_code, 
+      ean_product_code, ean_check_digit 
+    } = req.body;
     try {
       const result = await this.pool.query(
-        'UPDATE supermarket_data SET name = $1, price = $2, date_added = $3, expiration_date = $4, quantity = $5, in_stock = $6 WHERE id = $7 RETURNING *',
-        [name, price, date_added, expiration_date, quantity, in_stock, id]
+        `UPDATE supermarket_data SET 
+          name = $1, price = $2, date_added = $3, expiration_date = $4, 
+          quantity = $5, in_stock = $6, category_id = $7,
+          ean_gsone_country_code = $8, ean_manufacturer_code = $9, 
+          ean_product_code = $10, ean_check_digit = $11
+        WHERE id = $12 RETURNING *`,
+        [name, price, date_added, expiration_date, quantity, in_stock,
+         category_id, ean_gsone_country_code, ean_manufacturer_code, 
+         ean_product_code, ean_check_digit, id]
       );
       res.json(result.rows[0]);
     } catch (error) {

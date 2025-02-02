@@ -64,6 +64,16 @@ class ApiFacade {
       throw error;
     }
   }
+
+  async getCategories() {
+    try {
+      const response = await this.client.get('/categories');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = ApiFacade;

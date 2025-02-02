@@ -18,4 +18,14 @@ It provides a user-friendly interface for adding, updating, and deleting items, 
 - EJS
 - PostgreSQL
 
+---
 
+## Perspective 
+
+
+
+### references
+
+- [Introduction to EAN codes](https://stregkoder.nu/information/stregkode-encyklopaedi/introduktion-til-stregkoder/)
+- [International Article Number](https://en.wikipedia.org/wiki/International_Article_Number)
+- [List of GS1 country codes](https://en.wikipedia.org/wiki/List_of_GS1_country_codes)

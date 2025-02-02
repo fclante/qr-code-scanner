@@ -21,7 +21,6 @@ router.get('/medarbejder/varer', async (req, res) => {
   try {
     const data = await api.get('/items');
     res.render('medarbejder/varer', { title: 'Medarbejder Varer', data: data });
-    console.log(data);
   } catch (error) {
     res.status(500).send('Error fetching data');
   }
@@ -82,6 +81,7 @@ router.get('/export', async (req, res) => {
 const QRCode = require('qrcode');
 
 function sanitizeFileName(str) {
+  if (!str) return 'unknown';  // Handle null/undefined case
   return str
     .replace(/æ/g, 'ae')
     .replace(/ø/g, 'oe')
@@ -89,7 +89,7 @@ function sanitizeFileName(str) {
     .replace(/Æ/g, 'Ae')
     .replace(/Ø/g, 'Oe')
     .replace(/Å/g, 'Aa')
-    .replace(/\s+/g, '_'); // Replace spaces with underscores
+    .replace(/[^a-z0-9]/gi, '_'); // Replace any non-alphanumeric chars with underscore
 }
 
 // Add this new route
@@ -98,7 +98,26 @@ router.get('/generate/:id', async (req, res) => {
     const id = req.params.id;   
     const item = await api.getById('/items', id);
     
-    QRCode.toDataURL(JSON.stringify(item), (err, url) => {
+    console.log(item);
+    if (!item) {
+      return res.status(404).send('Item not found');
+    }
+    
+    // Create a minimal data object for the QR code
+    const qrData = {
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: 1,
+      category_id: item.category_id,
+      expiration_date: item.expiration_date,
+      ean_gsOne_country_code: item.ean_gsOne_country_code,
+      ean_manufacturer_code: item.ean_manufacturer_code,
+      ean_product_code: item.ean_product_code,
+      ean_check_digit: item.ean_check_digit
+    };
+
+    QRCode.toDataURL(JSON.stringify(qrData), (err, url) => {
       if (err) {
         console.error('QR Code generation failed:', err);
         return res.status(500).send('Failed to generate QR code');
@@ -106,7 +125,9 @@ router.get('/generate/:id', async (req, res) => {
 
       const base64Image = url.split(',')[1];
       const imgBuffer = Buffer.from(base64Image, 'base64');
-      res.setHeader('Content-Disposition', `attachment; filename="qr-${sanitizeFileName(item.name)}.png"`);
+      const fileName = sanitizeFileName(item.name || 'item') + '.png';
+      
+      res.setHeader('Content-Disposition', `attachment; filename="qr-${fileName}"`);
       res.setHeader('Content-Type', 'image/png');
       res.send(imgBuffer);
     });
@@ -118,17 +139,26 @@ router.get('/generate/:id', async (req, res) => {
 
 
 // Create/Update form route (GET)
-router.get('/create', (req, res) => {
-  res.render('medarbejder/create-item', { 
-    title: 'Create New Item', 
-    item: null 
-  });
+router.get('/create', async (req, res) => {
+  try {
+    const categories = await api.getCategories();
+    res.render('medarbejder/create-item', { 
+      title: 'Create New Item', 
+      item: null,
+      categories
+    });
+  } catch (error) {
+    res.status(500).send('Error loading form');
+  }
 });
 
 router.post('/create', async (req, res) => {
   try {
-    console.log('Received data:', req.body);
-    const { name, price, date_added, expiration_date, quantity, in_stock } = req.body;
+    const { 
+      name, price, date_added, expiration_date, quantity, in_stock,
+      category_id, ean_gsone_country_code, ean_manufacturer_code,
+      ean_product_code, ean_check_digit 
+    } = req.body;
     
     // Validate that we received data
     if (!req.body || Object.keys(req.body).length === 0) {
@@ -137,8 +167,24 @@ router.post('/create', async (req, res) => {
     }
     
     // Validate required fields
-    if (!name || !price || !date_added || !expiration_date || quantity === undefined || in_stock === undefined) {
-      console.log('Missing required fields:', { name, price, date_added, expiration_date, quantity, in_stock });
+    if (!name || !price || !date_added || !expiration_date || 
+        quantity === undefined || in_stock === undefined || 
+        !category_id || !ean_gsone_country_code || 
+        !ean_manufacturer_code || !ean_product_code || 
+        !ean_check_digit) {
+      console.log('Missing required fields:', { 
+        name, 
+        price, 
+        date_added, 
+        expiration_date, 
+        quantity, 
+        in_stock,
+        category_id,
+        ean_gsone_country_code,
+        ean_manufacturer_code,
+        ean_product_code,
+        ean_check_digit 
+      });
       return res.status(400).send('Missing required fields');
     }
 
@@ -152,7 +198,11 @@ router.post('/create', async (req, res) => {
     }
 
     // Create the item
-    await api.post('/items', { name, price, date_added, expiration_date, quantity, in_stock });
+    await api.post('/items', { 
+      name, price, date_added, expiration_date, quantity, in_stock,
+      category_id, ean_gsone_country_code, ean_manufacturer_code,
+      ean_product_code, ean_check_digit 
+    });
     res.redirect('/medarbejder/varer');
   } catch (error) {
     console.error('Error creating item:', error);
@@ -176,13 +226,16 @@ router.get('/delete/:id', async (req, res) => {
 router.get('/update/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const item = await api.getById('/items', id);
+    const [item, categories] = await Promise.all([
+      api.getById('/items', id),
+      api.getCategories()
+    ]);
     res.render('medarbejder/create-item', { 
       title: 'Update Item', 
-      item 
+      item,
+      categories
     });
   } catch (error) {
-    console.error('Error fetching item:', error);
     res.status(500).send('Error fetching item');
   }
 });
@@ -191,8 +244,11 @@ router.get('/update/:id', async (req, res) => {
 router.post('/update/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('Received data:', req.body);
-    const { name, price, date_added, expiration_date, quantity, in_stock } = req.body;
+    const { 
+      name, price, date_added, expiration_date, quantity, in_stock,
+      category_id, ean_gsone_country_code, ean_manufacturer_code,
+      ean_product_code, ean_check_digit 
+    } = req.body;
     
     // Improved validation
     if (!req.body || Object.keys(req.body).length === 0) {
@@ -200,12 +256,32 @@ router.post('/update/:id', async (req, res) => {
       return res.status(400).send('No data received');
     }
     
-    if (!name || !price || !date_added || !expiration_date || quantity === undefined || in_stock === undefined) {
-      console.log('Missing required fields:', { name, price, date_added, expiration_date, quantity, in_stock });
+    if (!name || !price || !date_added || !expiration_date || 
+        quantity === undefined || in_stock === undefined || 
+        !category_id || !ean_gsone_country_code || 
+        !ean_manufacturer_code || !ean_product_code || 
+        !ean_check_digit) {
+      console.log('Missing required fields:', { 
+        name, 
+        price, 
+        date_added, 
+        expiration_date, 
+        quantity, 
+        in_stock,
+        category_id,
+        ean_gsone_country_code,
+        ean_manufacturer_code,
+        ean_product_code,
+        ean_check_digit 
+      });
       return res.status(400).send('Missing required fields');
     }
     
-    await api.put(`/items/${id}`, { name, price, date_added, expiration_date, quantity, in_stock });
+    await api.put(`/items/${id}`, { 
+      name, price, date_added, expiration_date, quantity, in_stock,
+      category_id, ean_gsone_country_code, ean_manufacturer_code,
+      ean_product_code, ean_check_digit 
+    });
     res.redirect('/medarbejder/varer');
   } catch (error) {
     console.error('Error updating item:', error);
@@ -243,7 +319,11 @@ router.get('/scan/:id', async (req, res) => {
         quantity: apiResponse.quantity || 1,
         date_added: formatDate(apiResponse.date_added) || new Date().toISOString().split('T')[0],
         expiration_date: formatDate(apiResponse.expiration_date) || '',
-        in_stock: apiResponse.in_stock ?? true
+        in_stock: apiResponse.in_stock ?? true,
+        ean_gsOne_country_code: apiResponse.ean_gsOne_country_code || '',
+        ean_manufacturer_code: apiResponse.ean_manufacturer_code || '',
+        ean_product_code: apiResponse.ean_product_code || '',
+        ean_check_digit: apiResponse.ean_check_digit || ''
       };
 
       console.log('Processed scanned item:', scannedItem);
