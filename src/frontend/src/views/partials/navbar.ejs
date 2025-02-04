@@ -1,0 +1,8 @@
+<nav>
+  <div class="nav-container">
+    <% if (typeof currentPath !== 'undefined' && currentPath !== '/') { %>
+      <a href="javascript:history.back()" class="nav-btn">Back</a>
+    <% } %>
+    <a href="/" class="nav-btn" style="margin-left: 1rem;">Home</a>
+  </div>
+</nav>

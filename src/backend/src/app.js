@@ -7,7 +7,10 @@ const PORT = process.env.PORT || 3001;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-setRoutes(app);
+// Add /api prefix to all routes
+app.use('/api', (req, res, next) => {
+    setRoutes(express.Router())(req, res, next);
+});
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

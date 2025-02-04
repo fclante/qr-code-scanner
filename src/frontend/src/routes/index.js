@@ -1,7 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const ApiFacade = require('../apiFacade');
-const api = new ApiFacade('http://localhost:3001'); // Replace with your actual API base URL
+const fetch = require('node-fetch');
+
+// Update API base URL to use /api prefix
+const api = new ApiFacade(process.env.NODE_ENV === 'production' 
+    ? '/api'  // In production, use relative path
+    : 'http://localhost:3001/api'  // In development, use full URL
+);
 
 // Home route
 router.get('/', async (req, res) => {
@@ -32,13 +38,12 @@ router.get('/kunde', (req, res) => {
 });
 
 router.get('/kunde/scan', (req, res) => {
-  res.render('kunde/scan', { title: 'Kunde Scan' });
+  const items = req.session.basket || [];
+  res.render('kunde/scan', { 
+    title: 'Scan Items',
+    items: items 
+  });
 });
-
-router.get('/kunde/varer', (req, res) => {
-  res.render('kunde/varer', { title: 'Kunde Varer' });
-});
-
 
 // Export data as Excel
 router.get('/export', async (req, res) => {
@@ -98,24 +103,29 @@ router.get('/generate/:id', async (req, res) => {
     const id = req.params.id;   
     const item = await api.getById('/items', id);
     
-    console.log(item);
+    console.log('Item for QR generation:', item); // Debug log
+    
     if (!item) {
       return res.status(404).send('Item not found');
     }
     
-    // Create a minimal data object for the QR code
+    // Create a data object for the QR code with all needed fields
     const qrData = {
       id: item.id,
       name: item.name,
       price: item.price,
       quantity: 1,
+      date_added: item.date_added,
       category_id: item.category_id,
       expiration_date: item.expiration_date,
-      ean_gsOne_country_code: item.ean_gsOne_country_code,
+      in_stock: item.in_stock ? 'true' : 'false',  // Convert boolean to string
+      ean_country_code: item.ean_country_code || '570', // Default value if empty
       ean_manufacturer_code: item.ean_manufacturer_code,
       ean_product_code: item.ean_product_code,
       ean_check_digit: item.ean_check_digit
     };
+
+    console.log('QR Data being encoded:', qrData); // Debug log
 
     QRCode.toDataURL(JSON.stringify(qrData), (err, url) => {
       if (err) {
@@ -137,7 +147,6 @@ router.get('/generate/:id', async (req, res) => {
   }
 });
 
-
 // Create/Update form route (GET)
 router.get('/create', async (req, res) => {
   try {
@@ -156,7 +165,7 @@ router.post('/create', async (req, res) => {
   try {
     const { 
       name, price, date_added, expiration_date, quantity, in_stock,
-      category_id, ean_gsone_country_code, ean_manufacturer_code,
+      category_id, ean_country_code, ean_manufacturer_code,
       ean_product_code, ean_check_digit 
     } = req.body;
     
@@ -169,7 +178,7 @@ router.post('/create', async (req, res) => {
     // Validate required fields
     if (!name || !price || !date_added || !expiration_date || 
         quantity === undefined || in_stock === undefined || 
-        !category_id || !ean_gsone_country_code || 
+        !category_id || !ean_country_code || 
         !ean_manufacturer_code || !ean_product_code || 
         !ean_check_digit) {
       console.log('Missing required fields:', { 
@@ -180,7 +189,7 @@ router.post('/create', async (req, res) => {
         quantity, 
         in_stock,
         category_id,
-        ean_gsone_country_code,
+        ean_country_code,
         ean_manufacturer_code,
         ean_product_code,
         ean_check_digit 
@@ -200,7 +209,7 @@ router.post('/create', async (req, res) => {
     // Create the item
     await api.post('/items', { 
       name, price, date_added, expiration_date, quantity, in_stock,
-      category_id, ean_gsone_country_code, ean_manufacturer_code,
+      category_id, ean_country_code, ean_manufacturer_code,
       ean_product_code, ean_check_digit 
     });
     res.redirect('/medarbejder/varer');
@@ -246,7 +255,7 @@ router.post('/update/:id', async (req, res) => {
     const { id } = req.params;
     const { 
       name, price, date_added, expiration_date, quantity, in_stock,
-      category_id, ean_gsone_country_code, ean_manufacturer_code,
+      category_id, ean_country_code, ean_manufacturer_code,
       ean_product_code, ean_check_digit 
     } = req.body;
     
@@ -258,7 +267,7 @@ router.post('/update/:id', async (req, res) => {
     
     if (!name || !price || !date_added || !expiration_date || 
         quantity === undefined || in_stock === undefined || 
-        !category_id || !ean_gsone_country_code || 
+        !category_id || !ean_country_code || 
         !ean_manufacturer_code || !ean_product_code || 
         !ean_check_digit) {
       console.log('Missing required fields:', { 
@@ -269,7 +278,7 @@ router.post('/update/:id', async (req, res) => {
         quantity, 
         in_stock,
         category_id,
-        ean_gsone_country_code,
+        ean_country_code,
         ean_manufacturer_code,
         ean_product_code,
         ean_check_digit 
@@ -279,7 +288,7 @@ router.post('/update/:id', async (req, res) => {
     
     await api.put(`/items/${id}`, { 
       name, price, date_added, expiration_date, quantity, in_stock,
-      category_id, ean_gsone_country_code, ean_manufacturer_code,
+      category_id, ean_country_code, ean_manufacturer_code,
       ean_product_code, ean_check_digit 
     });
     res.redirect('/medarbejder/varer');
@@ -289,74 +298,111 @@ router.post('/update/:id', async (req, res) => {
   }
 });
 
-router.get('/scan/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    console.log('Scanning item with ID:', id);
-    
-    // Get the scanned item details
-    let scannedItem;
+router.get('/scan', async (req, res) => {
     try {
-      const apiResponse = await api.getById('/items', id);
-      console.log('Raw API response:', apiResponse);
-      
-      // Ensure we have a valid response object
-      if (!apiResponse) {
-        throw new Error(`No item found with ID: ${id}`);
-      }
+        console.log('Scan route accessed');
+        console.log('Query parameters:', req.query); // Add debug log
+        
+        // Make sure all required fields are present
+        const scannedItem = {
+            id: req.query.id,
+            name: req.query.name,
+            price: req.query.price,
+            quantity: req.query.quantity,
+            date_added: req.query.date_added,
+            expiration_date: req.query.expiration_date,
+            in_stock: req.query.in_stock === 'true', 
+            category_id: req.query.category_id,
+            ean_country_code: req.query.ean_country_code,
+            ean_manufacturer_code: req.query.ean_manufacturer_code,
+            ean_product_code: req.query.ean_product_code,
+            ean_check_digit: req.query.ean_check_digit
+        };
+        
+        console.log('Processed scanned item:', scannedItem); // Add debug log
 
-      // Safely format dates if they exist
-      const formatDate = (dateStr) => {
-        if (!dateStr) return '';
-        return dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
-      };
-      
-      // Create a sanitized scanned item object with default values
-      scannedItem = {
-        id: apiResponse.id || id,
-        name: apiResponse.name || '',
-        price: apiResponse.price || 0,
-        quantity: apiResponse.quantity || 1,
-        date_added: formatDate(apiResponse.date_added) || new Date().toISOString().split('T')[0],
-        expiration_date: formatDate(apiResponse.expiration_date) || '',
-        in_stock: apiResponse.in_stock ?? true,
-        ean_gsOne_country_code: apiResponse.ean_gsOne_country_code || '',
-        ean_manufacturer_code: apiResponse.ean_manufacturer_code || '',
-        ean_product_code: apiResponse.ean_product_code || '',
-        ean_check_digit: apiResponse.ean_check_digit || ''
-      };
-
-      console.log('Processed scanned item:', scannedItem);
-
-    } catch (apiError) {
-      console.error('API Error:', apiError);
-      // Instead of throwing error, create a new item template
-      scannedItem = {
-        id: id,
-        name: '',
-        price: 0,
-        quantity: 1,
-        date_added: new Date().toISOString().split('T')[0],
-        expiration_date: '',
-        in_stock: true
-      };
+        res.render('medarbejder/scan-result', {
+            title: 'Scan Result',
+            scannedItem: scannedItem,
+            req: req
+        });
+    } catch (error) {
+        console.error('Error in scan route:', error);
+        res.status(500).render('error', { 
+            message: 'Error processing scan',
+            error: error
+        });
     }
-    
-    // Always render the template with the scanned item
-    res.render('medarbejder/scan-result', {
-      title: 'Scan Result',
-      scannedItem,
-      existingItem: null // We'll always show the new item form for now
-    });
+});
 
-  } catch (error) {
-    console.error('Error processing scan:', error);
-    res.status(500).render('error', { 
-      title: 'Error',
-      message: 'Error processing QR code scan',
-      error: error
+// Add this helper function to fetch meal suggestions
+async function fetchMealSuggestions(ingredient) {
+    try {
+        console.log('Fetching suggestions for:', ingredient);
+        const response = await fetch(
+            `https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(ingredient)}`
+        );
+        const data = await response.json();
+        console.log('API response:', data);
+        return data.meals || [];
+    } catch (error) {
+        console.error('Error fetching meal suggestions:', error);
+        return [];
+    }
+}
+
+router.post('/kunde/basket/add', async (req, res) => {
+    try {
+        const { name, details } = req.body;
+        console.log('Adding item:', name, details);
+        
+        if (!req.session.basket) {
+            req.session.basket = [];
+        }
+        
+        const suggestedMeals = await fetchMealSuggestions(name);
+        console.log('Suggested meals:', suggestedMeals);
+        
+        req.session.basket.push({
+            name,
+            details,
+            amount: 1,
+            suggestedMeals: suggestedMeals
+        });
+
+        console.log('Updated basket:', req.session.basket);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error adding item to basket:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// Update the scan route to include basket items
+router.get('/kunde/scan', (req, res) => {
+    const items = req.session.basket || [];
+    res.render('kunde/scan', { 
+        title: 'Scan Items',
+        items: items 
     });
-  }
+});
+
+router.delete('/kunde/basket/remove', (req, res) => {
+    try {
+        const { name } = req.body;
+        
+        if (!req.session.basket) {
+            throw new Error('Basket not found');
+        }
+        
+        // Remove item from basket
+        req.session.basket = req.session.basket.filter(item => item.name !== name);
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error removing item from basket:', error);
+        res.json({ success: false, error: error.message });
+    }
 });
 
 module.exports = router;

@@ -1,0 +1,330 @@
+<div class="scan-container">
+    <h1><% title %></h1>
+
+    <!-- Basket Section -->
+    <div class="basket-container">
+        <% items.forEach(function(item) { %>
+            <div class="item-card" onclick="toggleCard(this)">
+                <div class="item-header">
+                    <h3><%= item.name %></h3>
+                    <div class="item-actions">
+                        <span class="amount"><%= item.amount %></span>
+                        <button class="btn btn-danger remove-btn" onclick="removeItem(event, '<%= item.name %>')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="item-details hidden">
+                    <h4>Suggested Meals:</h4>
+                    <div class="meal-suggestions">
+                        <% item.suggestedMeals.forEach(function(meal) { %>
+                            <div class="meal-item" onclick="showRecipe('<%= meal.idMeal %>')">
+                                <img src="<%= meal.strMealThumb %>" alt="<%= meal.strMeal %>">
+                                <p><%= meal.strMeal %></p>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+            </div>
+        <% }); %>
+    </div>
+
+    <!-- Scanner Card -->
+    <div class="card scanner-card" style="display: none;" id="scannerCard">
+        <div class="card-body">
+            <div id="reader" class="scanner-container"></div>
+        </div>
+    </div>
+    
+    <button id="scanButton" class="floating-action-btn">
+        <i class="fas fa-qr-code"></i>
+        Scan
+    </button>
+
+    <!-- Item Details Modal -->
+    <div id="itemModal" class="modal">
+        <div class="card modal-content">
+            <div class="card-header">
+                <h2 id="modalItemName"></h2>
+            </div>
+            <div class="card-body">
+                <p id="modalItemDetails"></p>
+            </div>
+            <div class="card-actions">
+                <button class="btn" onclick="addToBasket()">Add to Basket</button>
+                <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .scan-container {
+        padding: 20px;
+        padding-bottom: 100px;
+    }
+
+    .basket-container {
+        margin-top: 20px;
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .item-card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px var(--shadow);
+        margin: 10px 0;
+        padding: 15px;
+        cursor: pointer;
+    }
+
+    .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text-dark);
+        gap: 1rem;
+    }
+
+    .item-details.hidden {
+        display: none;
+    }
+
+    .meal-suggestions {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 10px;
+    }
+
+    .meal-item {
+        text-align: center;
+        padding: 10px;
+        background-color: var(--soft-white);
+        border-radius: 8px;
+        transition: transform 0.2s;
+    }
+
+    .meal-item:hover {
+        transform: translateY(-2px);
+    }
+
+    .meal-item img {
+        width: 100%;
+        border-radius: 8px;
+    }
+
+    .scanner-card {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 600px;
+        margin: 0 auto;
+        z-index: 999;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(45, 70, 84, 0.5);
+        z-index: 1000;
+    }
+
+    .modal .modal-content {
+        margin: 20% auto;
+        width: 90%;
+        max-width: 500px;
+    }
+
+    @media (max-width: 768px) {
+        .scanner-container {
+            min-height: 250px;
+        }
+        
+        #reader {
+            width: 100% !important;
+        }
+        
+        #reader video {
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        .modal .modal-content {
+            margin: 30% auto;
+            width: 95%;
+        }
+    }
+
+    .item-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .remove-btn {
+        padding: 0.5rem;
+        min-width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Prevent the card from toggling when clicking the remove button */
+    .remove-btn:active,
+    .remove-btn:focus {
+        outline: none;
+    }
+
+    .amount {
+        min-width: 2rem;
+        text-align: right;
+    }
+</style>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+    const html5QrCode = new Html5Qrcode("reader", { 
+        verbose: false
+    });
+    const scannerCard = document.getElementById('scannerCard');
+    
+    document.getElementById('scanButton').addEventListener('click', function() {
+        scannerCard.style.display = 'block';
+        html5QrCode.start(
+            { facingMode: "environment" },
+            {
+                fps: 10,
+                qrbox: 250,
+                disableFlip: false,
+                verbose: false
+            },
+            (decodedText) => {
+                // Success callback
+                try {
+                    console.log('Raw QR code data:', decodedText); // Debug log
+                    const scannedData = JSON.parse(decodedText);
+                    console.log('Parsed QR code data:', scannedData); // Debug log
+                    
+                    // Stop scanning
+                    html5QrCode.stop().then(() => {
+                        console.log('Scanner stopped'); // Debug log
+                        scannerCard.style.display = 'none';
+                        
+                        // Show the modal with item details
+                        document.getElementById('modalItemName').textContent = scannedData.name || 'Item';
+                        document.getElementById('modalItemDetails').textContent = JSON.stringify(scannedData, null, 2);
+                        document.getElementById('itemModal').style.display = 'block';
+                        
+                        console.log('Modal displayed with data:', { // Debug log
+                            name: scannedData.name,
+                            details: scannedData
+                        });
+                    });
+                } catch (error) {
+                    console.error('Error processing QR code:', error); // Debug log
+                    alert('Invalid QR code format: ' + error.message);
+                    html5QrCode.stop();
+                    scannerCard.style.display = 'none';
+                }
+            },
+            (error) => {
+                // Only log actual errors, not scanning operation messages
+                if (error !== 'No QR code found') {
+                    console.log('Scanning error:', error); // Debug log
+                }
+                return;
+            }
+        ).catch(err => {
+            console.error('Failed to start scanner:', err); // Debug log
+        });
+    });
+
+    function toggleCard(card) {
+        card.querySelector('.item-details').classList.toggle('hidden');
+    }
+
+    function showRecipe(mealId) {
+        fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`)
+            .then(response => response.json())
+            .then(data => {
+                // Handle showing the recipe details
+                console.log(data);
+            });
+    }
+
+    function addToBasket() {
+        const itemName = document.getElementById('modalItemName').textContent;
+        const itemDetails = document.getElementById('modalItemDetails').textContent;
+        
+        // Send POST request to add item to basket
+        fetch('/kunde/basket/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: itemName,
+                details: itemDetails
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Refresh the page to show updated basket
+                location.reload();
+            } else {
+                alert('Failed to add item to basket');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to add item to basket');
+        });
+
+        // Close the modal
+        closeModal();
+    }
+
+    function closeModal() {
+        document.getElementById('itemModal').style.display = 'none';
+    }
+
+    function removeItem(event, itemName) {
+        // Prevent the card from toggling when clicking the remove button
+        event.stopPropagation();
+        
+        // Send DELETE request to remove item from basket
+        fetch('/kunde/basket/remove', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: itemName
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Refresh the page to show updated basket
+                location.reload();
+            } else {
+                alert('Failed to remove item from basket');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to remove item from basket');
+        });
+    }
+</script>

@@ -1,0 +1,106 @@
+<div class="container">
+  <h1>Medarbejder - Varer</h1>
+  
+  <div class="controls">
+    <div class="filter-section">
+      <select id="categoryFilter" onchange="filterItems()">
+        <option value="">All Categories</option>
+        <% [...new Set(data.map(item => item.category_name))].forEach(category => { %>
+          <option value="<%= category %>"><%= category %></option>
+        <% }); %>
+      </select>
+      
+      <select id="sortBy" onchange="sortItems()">
+        <option value="">Sort By...</option>
+        <option value="name">Name</option>
+        <option value="price">Price</option>
+        <option value="date_added">Date Added</option>
+        <option value="quantity">Quantity</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="grid">
+    <% data.forEach((row) => { %>
+      <div class="card" data-category="<%= row.category_name %>">
+        <div class="card-header">
+          <h3><%= row.name %></h3>
+        </div>
+        <div class="card-body">
+          <p>Price: <%= Number(row.price).toFixed(2) %> DKK</p>
+          <p>Date Added: <%= row.date_added %></p>
+          <p>Expiration Date: <%= row.expiration_date %></p>
+          <p>Quantity: <%= row.quantity %></p>
+          <p>In Stock: <%= row.in_stock ? 'Yes' : 'No' %></p>
+          <p>Category: <%= row.category_name %></p>
+          <p>EAN GS1 Country Code: <%= row.ean_country_code %></p>
+          <p>EAN Manufacturer: <%= row.ean_manufacturer_code %></p>
+          <p>EAN Product: <%= row.ean_product_code %></p>
+          <p>EAN Check: <%= row.ean_check_digit %></p>
+        </div>
+        <div class="card-actions">
+          <a href="/generate/<%= row.id %>" class="btn btn-success">Print QR</a>
+          <a href="/delete/<%= row.id %>" class="btn btn-danger">Delete</a>   
+          <a href="/update/<%= row.id %>" class="btn btn-success">Update</a>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+  
+  <a href="/create" class="floating-action-btn">+ Add New</a>
+</div>
+
+<script>
+  function filterItems() {
+    const category = document.getElementById('categoryFilter').value;
+    const cards = document.querySelectorAll('.card');
+    
+    cards.forEach(card => {
+      if (!category || card.dataset.category === category) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  function sortItems() {
+    const sortBy = document.getElementById('sortBy').value;
+    const grid = document.querySelector('.grid');
+    const cards = Array.from(grid.children);
+
+    cards.sort((a, b) => {
+      let aValue, bValue;
+      
+      switch(sortBy) {
+        case 'name':
+          aValue = a.querySelector('h3').textContent;
+          bValue = b.querySelector('h3').textContent;
+          return aValue.localeCompare(bValue);
+        
+        case 'price':
+          aValue = parseFloat(a.querySelector('p:nth-child(1)').textContent.split(' ')[1]);
+          bValue = parseFloat(b.querySelector('p:nth-child(1)').textContent.split(' ')[1]);
+          return aValue - bValue;
+        
+        case 'date_added':
+          aValue = new Date(a.querySelector('p:nth-child(2)').textContent.split(': ')[1]);
+          bValue = new Date(b.querySelector('p:nth-child(2)').textContent.split(': ')[1]);
+          return aValue - bValue;
+        
+        case 'quantity':
+          aValue = parseInt(a.querySelector('p:nth-child(4)').textContent.split(': ')[1]);
+          bValue = parseInt(b.querySelector('p:nth-child(4)').textContent.split(': ')[1]);
+          return aValue - bValue;
+        
+        default:
+          return 0;
+      }
+    });
+
+    // Remove all existing cards
+    cards.forEach(card => grid.removeChild(card));
+    // Add sorted cards back
+    cards.forEach(card => grid.appendChild(card));
+  }
+</script>

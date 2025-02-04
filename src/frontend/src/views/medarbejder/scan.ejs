@@ -1,0 +1,98 @@
+<div class="container">
+  <h1>Medarbejder - Scan</h1>
+
+  <div class="card scanner-card">
+    <div class="card-body">
+      <div id="reader" class="scanner-container"></div>
+      <button id="scanButton" class="btn btn-primary mt-1">Scan QR Code</button>
+    </div>
+  </div>
+
+  <div id="result-card" class="card mt-1" style="display: none;">
+    <div class="card-header">
+      Scan Results
+    </div>
+    <div class="card-body">
+      <p id="scan-result">No data yet</p>
+    </div>
+  </div>
+</div>
+
+<style>
+.scanner-card {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.scanner-container {
+  width: 100%;
+  min-height: 300px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+/* Make scanner responsive on mobile */
+@media (max-width: 768px) {
+  .scanner-container {
+    min-height: 250px;
+  }
+  
+  #reader {
+    width: 100% !important;
+  }
+  
+  #reader video {
+    width: 100% !important;
+    height: auto !important;
+  }
+}
+</style>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+    const html5QrCode = new Html5Qrcode("reader", { 
+        verbose: false
+    });
+    const resultCard = document.getElementById('result-card');
+    const scanResult = document.getElementById('scan-result');
+    
+    document.getElementById('scanButton').addEventListener('click', () => {
+        html5QrCode.start(
+            { facingMode: "environment" },
+            {
+                fps: 10,
+                qrbox: 250,
+                disableFlip: false,
+                verbose: false
+            },
+            (decodedText) => {
+                // Success callback
+                try {
+                    console.log('Raw QR code data:', decodedText); // Debug log
+                    const scannedData = JSON.parse(decodedText);
+                    console.log('Parsed QR code data:', scannedData); // Debug log
+                    
+                    // Convert scanned data to query parameters
+                    const queryParams = new URLSearchParams();
+                    Object.entries(scannedData).forEach(([key, value]) => {
+                        queryParams.append(key, value);
+                    });
+                    console.log('Query params:', queryParams.toString()); // Debug log
+                    
+                    // Simplified URL without ID parameter
+                    window.location.href = `/scan?${queryParams.toString()}`;
+                } catch (error) {
+                    console.error('Invalid QR code data:', error);
+                    resultCard.style.display = 'block';
+                    scanResult.textContent = 'Invalid QR code format';
+                }
+                html5QrCode.stop();
+            },
+            (error) => {
+                // Suppress all scanning operation messages
+                return;
+            }
+        );
+    });
+</script>

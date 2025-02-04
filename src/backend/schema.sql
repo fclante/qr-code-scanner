@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS supermarket_data (
     quantity INTEGER NOT NULL,
     in_stock BOOLEAN NOT NULL,
     category_id INTEGER REFERENCES food_categories(id),
-    ean_gsOne_country_code TEXT NOT NULL,
+    ean_country_code TEXT NOT NULL,
     ean_manufacturer_code INTEGER NOT NULL,
     ean_product_code INTEGER NOT NULL,
     ean_check_digit INTEGER NOT NULL
@@ -50,7 +50,7 @@ INSERT INTO supermarket_data (
     quantity, 
     in_stock,
     category_id,
-    ean_gsOne_country_code,
+    ean_country_code,
     ean_manufacturer_code,
     ean_product_code,
     ean_check_digit

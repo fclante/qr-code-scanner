@@ -1,0 +1,97 @@
+<div class="container">
+  <div class="debug-section">
+    <h4>Debug Information</h4>
+    <pre class="debug-output">
+Route Parameters: <%= JSON.stringify(req.params, null, 2) %>
+Query Parameters: <%= JSON.stringify(req.query, null, 2) %>
+Scanned Item: <%= JSON.stringify(scannedItem, null, 2) %>
+Date Added Value: <%= scannedItem?.date_added %>
+    </pre>
+  </div>
+
+  <h2>Scanned Item Details</h2>
+  
+  <div class="card mb-1">
+    <div class="card-header">
+      <h3>Scanned Details</h3>
+    </div>
+    <div class="card-body">
+      <div class="details-grid">
+        <p><strong>ID:</strong> <%= scannedItem?.id || 'N/A' %></p>
+        <p><strong>Name:</strong> <%= scannedItem?.name || 'N/A' %></p>
+        <p><strong>Price:</strong> <%= scannedItem?.price || 0 %> kr</p>
+        <p><strong>Quantity:</strong> <%= scannedItem?.quantity || 0 %></p>
+        <p><strong>Date Added:</strong> <%= scannedItem?.date_added || 'N/A' %></p>
+        <p><strong>Expiration Date:</strong> <%= scannedItem?.expiration_date || 'N/A' %></p>
+        <p><strong>In Stock:</strong> <%= scannedItem?.in_stock ? 'Yes' : 'No' %></p>
+      </div>
+      <div class="card-actions">
+        <form action="/create" method="POST">
+          <input type="hidden" name="id" value="<%= scannedItem?.id %>">
+          <input type="hidden" name="name" value="<%= scannedItem?.name %>">
+          <input type="hidden" name="price" value="<%= scannedItem?.price %>">
+          <input type="hidden" name="quantity" value="<%= scannedItem?.quantity %>">
+          <input type="hidden" name="date_added" value="<%= scannedItem?.date_added %>">
+          <input type="hidden" name="expiration_date" value="<%= scannedItem?.expiration_date %>">
+          <input type="hidden" name="in_stock" value="<%= scannedItem?.in_stock %>">
+          <input type="hidden" name="category_id" value="<%= scannedItem?.category_id %>">
+          <input type="hidden" name="ean_country_code" value="<%= scannedItem?.ean_country_code %>">
+          <input type="hidden" name="ean_manufacturer_code" value="<%= scannedItem?.ean_manufacturer_code %>">
+          <input type="hidden" name="ean_product_code" value="<%= scannedItem?.ean_product_code %>">
+          <input type="hidden" name="ean_check_digit" value="<%= scannedItem?.ean_check_digit %>">
+          <button type="submit" class="btn btn-success">Create Item</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
+}
+
+.details-grid p {
+  margin: 0.25rem 0;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.card-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.debug-section {
+  background: #f8f9fa;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+.debug-output {
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 0.875rem;
+  margin: 0;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .card {
+    margin: 0.5rem 0;
+  }
+}
+</style> 

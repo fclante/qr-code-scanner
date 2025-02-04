@@ -79,17 +79,17 @@ class CRUDController {
   async createItem(req, res) {
     const { 
       name, price, date_added, expiration_date, quantity, in_stock,
-      category_id, ean_gsone_country_code, ean_manufacturer_code, 
+      category_id, ean_country_code, ean_manufacturer_code, 
       ean_product_code, ean_check_digit 
     } = req.body;
     try {
       const result = await this.pool.query(
         `INSERT INTO supermarket_data (
           name, price, date_added, expiration_date, quantity, in_stock,
-          category_id, ean_gsone_country_code, ean_manufacturer_code, ean_product_code, ean_check_digit
+          category_id, ean_country_code, ean_manufacturer_code, ean_product_code, ean_check_digit
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
         [name, price, date_added, expiration_date, quantity, in_stock,
-         category_id, ean_gsone_country_code, ean_manufacturer_code, ean_product_code, ean_check_digit]
+         category_id, ean_country_code, ean_manufacturer_code, ean_product_code, ean_check_digit]
       );
       res.json(result.rows[0]);
     } catch (error) {
@@ -102,7 +102,7 @@ class CRUDController {
     const { id } = req.params;
     const { 
       name, price, date_added, expiration_date, quantity, in_stock,
-      category_id, ean_gsone_country_code, ean_manufacturer_code, 
+      category_id, ean_country_code, ean_manufacturer_code, 
       ean_product_code, ean_check_digit 
     } = req.body;
     try {
@@ -110,11 +110,11 @@ class CRUDController {
         `UPDATE supermarket_data SET 
           name = $1, price = $2, date_added = $3, expiration_date = $4, 
           quantity = $5, in_stock = $6, category_id = $7,
-          ean_gsone_country_code = $8, ean_manufacturer_code = $9, 
+          ean_country_code = $8, ean_manufacturer_code = $9, 
           ean_product_code = $10, ean_check_digit = $11
         WHERE id = $12 RETURNING *`,
         [name, price, date_added, expiration_date, quantity, in_stock,
-         category_id, ean_gsone_country_code, ean_manufacturer_code, 
+         category_id, ean_country_code, ean_manufacturer_code, 
          ean_product_code, ean_check_digit, id]
       );
       res.json(result.rows[0]);
