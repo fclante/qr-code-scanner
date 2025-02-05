@@ -3,11 +3,14 @@ const router = express.Router();
 const ApiFacade = require('../apiFacade');
 const fetch = require('node-fetch');
 
-// Update API base URL to use /api prefix
-const api = new ApiFacade(process.env.NODE_ENV === 'production' 
-    ? '/api'  // In production, use relative path
-    : 'http://localhost:3001/api'  // In development, use full URL
-);
+// When running in Docker, use the service name
+const API_URL = process.env.NODE_ENV === 'production'
+  ? 'http://backend:3001/api'  // Use Docker service name
+  : 'http://localhost:5667/api';
+
+console.log('Using API URL:', API_URL); // Debug log
+
+const api = new ApiFacade(API_URL);
 
 // Home route
 router.get('/', async (req, res) => {

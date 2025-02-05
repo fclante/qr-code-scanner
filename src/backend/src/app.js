@@ -2,16 +2,13 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const setRoutes = require('./routes/index');
 const app = express();
-const PORT = process.env.PORT || 3001;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Add /api prefix to all routes
-app.use('/api', (req, res, next) => {
-    setRoutes(express.Router())(req, res, next);
-});
+// Create a router for /api routes
+const apiRouter = express.Router();
+app.use('/api', setRoutes(apiRouter));
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, '0.0.0.0', () => console.log(`Backend server running on port ${PORT}`));

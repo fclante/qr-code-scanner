@@ -2,7 +2,28 @@ const axios = require('axios');
 
 class ApiFacade {
   constructor(baseURL) {
-    this.client = axios.create({ baseURL });
+    console.log('API Base URL:', baseURL); // Debug log
+    this.client = axios.create({ 
+      baseURL,
+      timeout: 5000, // Add timeout
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    // Add response interceptor for debugging
+    this.client.interceptors.response.use(
+      response => response,
+      error => {
+        console.error('API Error:', {
+          url: error.config?.url,
+          method: error.config?.method,
+          status: error.response?.status,
+          data: error.response?.data
+        });
+        throw error;
+      }
+    );
   }
 
   async get(endpoint) {

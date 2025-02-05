@@ -1,9 +1,8 @@
 const express = require('express');
 const CRUDController = require('../controllers/crudController'); // Ensure this path is correct
 
-function setRoutes(app) {
+function setRoutes(router) {
   const controller = new CRUDController(); // Ensure CRUDController is a constructor
-  const router = express.Router();  // Create a router instance
 
   router.get('/items', (req, res) => {
     if (req.query.id) {

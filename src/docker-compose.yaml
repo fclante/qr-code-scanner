@@ -1,25 +1,63 @@
-version: '3.8'
-
 services:
   frontend:
     build: 
-      context: ./src/frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend.dockerfile
     container_name: supermarket-frontend
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      - REACT_APP_API_URL=http://185.107.15.6:5667/api
+    ports:
+      - "5666:3000"
     networks:
       - app-network
+    depends_on:
+      - backend
 
   backend:
     build: 
-      context: ./src/backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend.dockerfile
     container_name: supermarket-backend
     restart: unless-stopped
+    env_file:
+      - ./backend/.env
     environment:
       - NODE_ENV=production
+    ports:
+      - "5667:3001"
+    networks:
+      - app-network
+    depends_on:
+      - fresh-flow-db
+
+  fresh-flow-db:
+    image: postgres
+    restart: unless-stopped
+    container_name: postgres-dev
+    environment:
+      POSTGRES_DB: fresh_flow_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: otg
+      POSTGRES_PASSWORD: otg
+    volumes:
+      - type: bind
+        source: ./data
+        target: /var/lib/postgresql/data
+      - type: bind
+        source: ./postgresql.conf
+        target: /etc/postgresql/postgresql.conf
+    ports:
+      - 2561:5432
+    networks:
+      - app-network
+
+  adminer:
+    image: adminer
+    restart: unless-stopped
+    ports:
+      - 2560:8080
     networks:
       - app-network
 
@@ -53,6 +91,6 @@ networks:
   app-network:
     driver: bridge
 
-volumes:
-  certbot-etc:
-  certbot-var:
+      #volumes:
+      #certbot-etc:
+      #certbot-var:
