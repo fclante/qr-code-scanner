@@ -15,6 +15,11 @@
         <option value="name">Name</option>
         <option value="price">Price</option>
         <option value="date_added">Date Added</option>
+        <option value="expiration_date">Expiration Date</option>
+        <option value="in_stock">In Stock</option>
+        <option value="ean_country_code">EAN Country Code</option>
+        <option value="ean_manufacturer_code">EAN Manufacturer Code</option>
+        <option value="ean_product_code">EAN Product Code</option>
         <option value="quantity">Quantity</option>
       </select>
     </div>
@@ -92,7 +97,31 @@
           aValue = parseInt(a.querySelector('p:nth-child(4)').textContent.split(': ')[1]);
           bValue = parseInt(b.querySelector('p:nth-child(4)').textContent.split(': ')[1]);
           return aValue - bValue;
-        
+
+        case 'expiration_date':
+          aValue = new Date(a.querySelector('p:nth-child(3)').textContent.split(': ')[1]);
+          bValue = new Date(b.querySelector('p:nth-child(3)').textContent.split(': ')[1]);
+          return aValue - bValue;
+
+        case 'in_stock':
+          aValue = a.querySelector('p:nth-child(5)').textContent.split(': ')[1] === 'Yes';
+          bValue = b.querySelector('p:nth-child(5)').textContent.split(': ')[1] === 'Yes';
+          return bValue - aValue;
+
+        case 'ean_country_code':
+          aValue = a.querySelector('p:nth-child(6)').textContent.split(': ')[1];
+          bValue = b.querySelector('p:nth-child(6)').textContent.split(': ')[1];
+          return aValue.localeCompare(bValue);
+      
+        case 'ean_manufacturer_code':
+          aValue = a.querySelector('p:nth-child(7)').textContent.split(': ')[1];
+          bValue = b.querySelector('p:nth-child(7)').textContent.split(': ')[1];
+          return aValue.localeCompare(bValue);
+
+        case 'ean_product_code':
+          aValue = a.querySelector('p:nth-child(8)').textContent.split(': ')[1];
+          bValue = b.querySelector('p:nth-child(8)').textContent.split(': ')[1];
+          return aValue.localeCompare(bValue);
         default:
           return 0;
       }
